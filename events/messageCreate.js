@@ -1,7 +1,7 @@
 const config = require("../config.json");
 const Reverso = require("reverso-api");
 const {PermissionFlagsBits, ChannelType} = require("discord-api-types/v10");
-const SupportedLanguages = require("reverso-api/src/entities/languages");
+const {FRENCH} = require("reverso-api/src/enums/languages");
 const reverso = new Reverso();
 const prefix = config.prefix;
 let lastxp = {};
@@ -172,7 +172,7 @@ function checkSpelling(client, message){
     if(!content) return;
 
     if(message.channel.id === config.checkSpellingChannel) {
-        reverso.getSpellCheck(content, SupportedLanguages.FRENCH, (err, response) => {
+        reverso.getSpellCheck(content, FRENCH, (err, response) => {
             if (err) throw err;
             if (!response) throw "No response from Reverso";
             response = response.corrections;
