@@ -1,0 +1,54 @@
+name: Deploy Histbot
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-histbot
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.HISTBOT_SSH_KEY }}
+
+      - name: Trust target host
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "${{ vars.HISTBOT_PORT }}" -H "${{ vars.HISTBOT_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync files to server
+        run: |
+          rsync -az --delete \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude 'node_modules/' \
+            --exclude 'hidden.json' \
+            -e "ssh -p ${{ vars.HISTBOT_PORT }}" \
+            ./ "${{ vars.HISTBOT_USER }}@${{ vars.HISTBOT_HOST }}:/root/Histbot/"
+
+      - name: Install dependencies and restart PM2
+        run: |
+          ssh -p "${{ vars.HISTBOT_PORT }}" "${{ vars.HISTBOT_USER }}@${{ vars.HISTBOT_HOST }}" <<'EOF'
+          set -e
+          cd /root/Histbot
+          npm ci
+          if pm2 describe histbot >/dev/null 2>&1; then
+            pm2 restart histbot
+          else
+            pm2 start histbot.js --name histbot
+          fi
+          pm2 save
+          
