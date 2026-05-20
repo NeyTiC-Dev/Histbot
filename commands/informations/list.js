@@ -4,9 +4,20 @@ const config = require("../../config.json");
 module.exports.run = async(client, message) => {
     mcutil.queryFull('192.168.1.42', {port: config.port, enableSRV: true, timeout: 5000})
         .then((response) => {
-            let clean = getCleanPlayers(response.players);
+            let players = [];
+            let onlinePlayers = response.onlinePlayers;
+            response.players.forEach(player => {
+                if (client.staffList.includes(player)) { //remove the staff from the list
+                    onlinePlayers--;
+                } else {
+                    players.push(player);
+                }
+            })
+
+            let clean = getCleanPlayers(players, client);
             let d = new Date();
-            const title = `Liste de joueurs connectés sur le serveur (${response.onlinePlayers}/${response.maxPlayers})`;
+
+            const title = `Liste de joueurs connectés sur le serveur (${onlinePlayers}/${response.maxPlayers})`;
             switch(clean.type){
                 case "message":
                     message.channel.send(title);
@@ -50,7 +61,8 @@ module.exports.run = async(client, message) => {
             message.reply("Erreur lors de la récupération du statut, serveur hors ligne ? `" + error + "`");
         });
 };
-function getCleanPlayers(players)
+
+function getCleanPlayers(players, client)
 {
     if(players.length === 0) return {type: "message", list: ["Aucun joueur"]}
     let cleanlist = [];

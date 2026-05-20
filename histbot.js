@@ -29,11 +29,13 @@ client.mysqlingame = mysql.createConnection({
 });
 client.tags = new Discord.Collection();
 client.autorespond = new Discord.Collection();
+client.staffList = [];
 client.xpapi = new xpmanager.xpmanager(client);
 
 async function start() {
     loadtags();
     loadautorespond();
+    loadstafflist();
 
     fs.readdir(path.resolve(__dirname, './events/'), (error, f) => {
         if (error) {
@@ -137,6 +139,17 @@ function loadautorespond()
             if(row["server"] === config.serverId) client.autorespond.set(row["autorespond"], row["content"]);
         });
     });
+}
+function loadstafflist() {
+    //Fetch every staff that should not be shown in /truelist
+    client.mysqlingame.query(
+        "SELECT * FROM ranks WHERE `rank` IN ('Fondateur', 'Cofonda', 'Developpeur', 'Administrateur', 'Super-Moderateur', 'Moderateur');", [],
+        function (err, results) {
+            if (!results) return;
+            results.forEach(row => {
+                client.staffList.push(row["player"])
+            })
+        });
 }
 function refreshrank()
 {
