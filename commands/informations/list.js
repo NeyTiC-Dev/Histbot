@@ -7,6 +7,7 @@ module.exports.run = async(client, message) => {
             let players = [];
             let onlinePlayers = response.onlinePlayers;
             response.players.forEach(player => {
+                player = player.replace(" ", "_");
                 if (client.staffList.includes(player)) { //remove the staff from the list
                     onlinePlayers--;
                 } else {
