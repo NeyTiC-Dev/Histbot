@@ -52,4 +52,84 @@ module.exports = (client, oldMember, member) => {
     let role = member.guild.roles.cache.find(r => r.name === "Histerien");
     if(!role) return console.log("Il n'y a pas de role Histerien sur le serveur");
     member.roles.add(role).catch();
+    
+    
+    
+    let userID = oldMember.id ?? member.id;
+    
+    if (!oldMember.roles.cache.has(config.ranks.Booster) && member.roles.cache.has(config.ranks.Booster)) {
+        
+        client.mysqlingame.query("SELECT * FROM discord_link WHERE discord = ?", [userID], async function(err, result) {
+          
+          if (err) {
+              console.log('Une erreur est survenue ' + err)
+              return;
+          }
+          
+          if (!result || !result[0]) return;
+          
+          let playerIG = result[0].player;
+          let rank = await getRank(client.mysqlingame, playerIG);
+          
+          if (rank !== 'histerien') return;
+          
+          setRank(playerIG, 'booster');
+          
+            
+        })
+        
+    }
+    
+    if (oldMember.roles.cache.has(config.ranks.Booster) && !member.roles.cache.has(config.ranks.Booster)) {
+        
+        client.mysqlingame.query("SELECT * FROM discord_link WHERE discord = ?", [userID], async function(err, result) {
+          
+          if (err) {
+              console.log('Une erreur est survenue ' + err)
+              return;
+          }
+          
+          if (!result || !result[0]) return;
+          
+          let playerIG = result[0].player;
+          let rank = await getRank(client.mysqlingame, playerIG);
+          
+          if (rank !== 'booster') return;
+          
+          setRank(playerIG, 'histerien');
+          
+            
+        });
+        
+    }
+    
+    
+    async function getRank(mysql, player) {
+    return new Promise((resolve, reject) => {
+        mysql.query("SELECT * FROM `ranks` WHERE player = ?", [player], function (err, results) {
+            if (err) {
+                console.error(err);
+                reject(err);
+                return;
+            }
+
+            if (!results || !results[0]) {
+                resolve(null);
+                return;
+            }
+            resolve(results[0].rank);
+        })
+    })
+}
+
+
+    
+    function setRank(player, rank) {
+        client.mysqlingame.query('UPDATE ranks SET rank = ? WHERE player = ?', [rank, player], function(err) {
+            
+            if (err) {
+                console.log('Une erreur est survenue ' + err)
+            }
+        })
+    }
 };

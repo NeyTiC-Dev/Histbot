@@ -22,6 +22,18 @@ module.exports.run = async(client, message, args) => {
         if (args[0] === "remove") {
             let result = await this.getFromDiscordId(client.mysqlingame, message.author.id);
             if (!result) return message.reply("Aucun compte lié à votre discord");
+            
+            let rankIG = await getRank(client.mysqlingame, result[0].player);
+            
+            if (rankIG === 'booster') {
+                
+                    client.mysqlingame.query('UPDATE ranks SET ranks = ? WHERE player = ?', ['histerien', result[0].player], function(err) {
+                        
+                        if (err) {
+                            console.log('Une erreur est survenue ' + err)
+                        }
+                    });
+            }
 
             client.mysqlingame.query("DELETE FROM `discord_link` WHERE discord = ?", [message.author.id], function (err) {
                 if (err) {
@@ -171,6 +183,25 @@ async function parseArg(arg, message, mysql, fullResult = false) {
         } else if (!fullResult) return arg;
     }
 }
+
+async function getRank(mysql, player) {
+    return new Promise((resolve, reject) => {
+        mysql.query("SELECT * FROM `ranks` WHERE player = ?", [player], function (err, results) {
+            if (err) {
+                console.error(err);
+                reject(err);
+                return;
+            }
+
+            if (!results || !results[0]) {
+                resolve(null);
+                return;
+            }
+            resolve(results[0].rank);
+        })
+    })
+}
+
 
 module.exports.config = {
     name: "link",
