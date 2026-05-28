@@ -9,6 +9,13 @@ module.exports.run = async(client, message, args) => {
     if(!kicked) return message.reply("Utilisateur introuvable.");
     if(kicked instanceof User) kicked = message.guild.members.cache.get(kicked.id);
 
+    const author = message.guild.members.cache.get(message.author.id)
+    
+    const posKicked = kicked.roles.highest.position;
+    const posAuthor = author.roles.highest.position;
+    
+    if (posKicked >= posAuthor) return message.reply("Tu ne peux pas expulser une personne avec un grade équivalent ou supérieur au tien !");
+
     args = args.slice(1);//Enlever le pseudo du kicked
     let kickReason = args.join(" ");
     if(!kickReason) kickReason = "Aucune raison fournie";
