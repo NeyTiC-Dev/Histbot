@@ -9,6 +9,13 @@ module.exports.run = async(client, message, args) => {
     if(!muted) return message.reply("Utilisateur introuvable.");
     if(muted instanceof User) muted = message.guild.members.cache.get(muted.id);
 
+    const author = message.guild.members.cache.get(message.author.id)
+    
+    const posMuted = muted.roles.highest.position;
+    const posAuthor = author.roles.highest.position;
+    
+    if (posMuted >= posAuthor) return message.reply("Tu ne peux pas muter une personne avec un grade équivalent ou supérieur au tien !");
+
     let mutedrole = message.guild.roles.cache.find(r => r.name === "Muted");
     if(!mutedrole) return message.reply("Il n'y a pas de role Muted sur ce serveur :sob:");
 
